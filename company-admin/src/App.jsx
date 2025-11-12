@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Login from "./Components/Login";
 import Signup from "./Components/Signup";
 import Dashboard from "./Pages/Dashboard";
@@ -10,32 +10,80 @@ import Reports from "./Pages/Reports";
 import CustomerSupport from "./Pages/ContactSupport";
 import Navbar from "./Components/Navbar";
 
-// ✅ ProtectedRoute component
+// ✅ Helper: check if token is expired
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1])); // decode JWT payload
+    const currentTime = Math.floor(Date.now() / 1000);
+    return payload.exp < currentTime; // true if expired
+  } catch (err) {
+    return true; // invalid token
+  }
+};
+
+// ✅ Protected route for logged-in users
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  if (!token) {
+
+  if (!token || isTokenExpired(token)) {
+    localStorage.removeItem("token");
     return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// ✅ Public route (redirect logged-in users to dashboard)
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  if (token && !isTokenExpired(token)) {
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
 
 function App() {
   const token = localStorage.getItem("token");
-  const location = useLocation(); 
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const hideNavbar = location.pathname === "/" || location.pathname === "/Signup";
+  // 👇 Auto logout if token expired while browsing
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      localStorage.removeItem("token");
+      navigate("/", { replace: true });
+    }
+  }, [token, location.pathname, navigate]);
+
+  // 👇 Hide navbar on login/signup routes
+  const hideNavbar =
+    location.pathname === "/" || location.pathname.toLowerCase() === "/signup";
 
   return (
     <div>
-      {/* ✅ Only show navbar when logged in AND not on login/signup */}
-      {!hideNavbar && token && <Navbar />}
+      {/* ✅ Show Navbar only when logged in and not on login/signup */}
+      {!hideNavbar && token && !isTokenExpired(token) && <Navbar />}
 
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* 🔓 Public Routes (login/signup) */}
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          }
+        />
 
-        {/* Protected Routes */}
+        {/* 🔒 Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -85,7 +133,7 @@ function App() {
           }
         />
 
-        {/* Catch-all */}
+        {/* 🚫 Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
