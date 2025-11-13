@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import Login from "./Components/Login";
+import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
+import ForgotPassword from "./Pages/ForgetPassword";
 import Dashboard from "./Pages/Dashboard";
 import Campaigns from "./Pages/Campaigns";
 import Distribute from "./Distribute";
@@ -132,6 +133,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+
 
         {/* 🚫 Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

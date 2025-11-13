@@ -1,147 +1,143 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { resetCompanyPassword, verifyCompanyResetOtp } from "../api/companyUser.api";
+import BrandingHeader from "../Components/BrandingHeader";
+import InputField from "../Components/InputField";
+import PasswordField from "../Components/PasswordField";
 
-function ForgetPassword() {
-  const [step, setStep] = useState(1);  
-  const [formData, setFormData] = useState({
-    email: "",
-    otp: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+const ForgotPassword = () => {
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const [step, setStep] = useState(1); // 1 = Email input, 2 = OTP + new password
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  // Step 1: Send OTP
-  const handleSendOtp = (e) => {
+  // ✅ Step 1: Send OTP
+  const handleSendOtp = async (e) => {
     e.preventDefault();
-    console.log("Sending OTP to:", formData.email);
-    // 🟢 Later: call backend POST /api/companyUser/send-otp
-    setStep(2);
-  };
+    setError("");
+    setMessage("");
 
-  // Step 2: Reset Password
-  const handleResetPassword = (e) => {
-    e.preventDefault();
-    if (formData.newPassword !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+    if (!email) {
+      setError("Please enter your email address");
       return;
     }
 
-    console.log("Verifying OTP and resetting password:", formData);
-    // 🟢 Later: call backend POST /api/companyUser/reset-password with email, otp, newPassword
+    setLoading(true);
+    try {
+      const res = await resetCompanyPassword(email);
+      setMessage(res.message || "OTP sent to your email");
+      setStep(2);
+    } catch (err) {
+      console.error("Reset password error:", err);
+      setError(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Step 2: Verify OTP and reset password
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    if (!otp || !newPassword) {
+      setError("Please enter OTP and new password");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log(email, otp, newPassword);
+      const res = await verifyCompanyResetOtp(email, otp, newPassword);
+      setMessage(res.message || "Password reset successful!");
+      setTimeout(() => navigate("/"), 2000);
+    } catch (err) {
+      console.error("Verify OTP error:", err);
+      setError(err.response?.data?.message || "Invalid OTP or request failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Forgot Password</h2>
-
-      {step === 1 && (
-        <form onSubmit={handleSendOtp} style={styles.form}>
-          <label style={styles.label}>Enter your registered email:</label>
-          <input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={styles.input}
+    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden font-sans">
+      <div className="flex justify-center px-4 md:px-40 py-5 flex-1">
+        <form
+          onSubmit={step === 1 ? handleSendOtp : handleVerifyOtp}
+          className="flex flex-col w-full max-w-xl py-5"
+        >
+          <div className="h-[100px]" />
+          <BrandingHeader
+            title={step === 1 ? "Reset your password" : "Verify OTP & set new password"}
           />
-          <button type="submit" style={styles.button}>
-            Send OTP
-          </button>
+
+          {/* Step 1: Email Input */}
+          {step === 1 && (
+            <InputField
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email address"
+            />
+          )}
+
+          {/* Step 2: OTP + New Password */}
+          {step === 2 && (
+            <>
+              <InputField
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP"
+              />
+              <PasswordField
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </>
+          )}
+
+          {/* Feedback messages */}
+          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
+          {message && <p className="text-green-600 text-center text-sm mt-2">{message}</p>}
+
+          {/* Submit button */}
+          <div className="flex px-4 py-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`h-10 px-16 w-fit items-center justify-center rounded-full text-sm font-bold text-white ${
+                loading ? "bg-blue-300" : "bg-blue-500 hover:bg-blue-600"
+              }`}
+            >
+              {loading
+                ? step === 1
+                  ? "Sending..."
+                  : "Verifying..."
+                : step === 1
+                ? "Send OTP"
+                : "Reset Password"}
+            </button>
+          </div>
+
+          {/* Navigation link */}
+          <p
+            className="text-center text-sm text-[#6a7581] underline px-4 pt-1 cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={() => navigate("/")}
+          >
+            Back to Login
+          </p>
         </form>
-      )}
-
-      {step === 2 && (
-        <form onSubmit={handleResetPassword} style={styles.form}>
-          <label style={styles.label}>Enter OTP:</label>
-          <input
-            type="text"
-            name="otp"
-            placeholder="Enter the OTP sent to your email"
-            value={formData.otp}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-
-          <label style={styles.label}>New Password:</label>
-          <input
-            type="password"
-            name="newPassword"
-            placeholder="Enter new password"
-            value={formData.newPassword}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-
-          <label style={styles.label}>Confirm Password:</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm new password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            style={styles.input}
-          />
-
-          <button type="submit" style={styles.button}>
-            Reset Password
-          </button>
-        </form>
-      )}
+      </div>
     </div>
   );
-}
-
-const styles = {
-  container: {
-    width: "100%",
-    maxWidth: "420px",
-    margin: "100px auto",
-    padding: "30px",
-    border: "1px solid #ddd",
-    borderRadius: "12px",
-    background: "#fafafa",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "20px",
-    fontSize: "24px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-  },
-  label: {
-    fontSize: "16px",
-  },
-  input: {
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    marginTop: "10px",
-    padding: "10px",
-    background: "#007bff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "16px",
-  },
 };
 
-export default ForgetPassword;
+export default ForgotPassword;

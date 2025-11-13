@@ -30,8 +30,23 @@ export const updateCompanyUser = async (id, data) => {
   return response.data;
 };
 
-// ❌ Delete company user
 export const deleteCompanyUser = async (id) => {
   const response = await axios.delete(`/CompanyUser/delete/${id}`);
   return response.data;
 };
+
+export const resetCompanyPassword = async (email) => {
+  const response = await axios.post("/CompanyUser/reset-password", { email });
+  return response.data;
+};
+
+// Verify OTP and set new password
+export const verifyCompanyResetOtp = async (email, otp, newPassword) => {
+  const response = await axios.post("/CompanyUser/verify-otp", {
+    email,
+    otp,
+    newPassword,
+  });
+  return response.data;
+};
+
