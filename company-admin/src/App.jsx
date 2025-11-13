@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Login from "./Components/Login";
-import Signup from "./Components/Signup";
+import Signup from "./Pages/Signup";
 import Dashboard from "./Pages/Dashboard";
 import Campaigns from "./Pages/Campaigns";
 import Distribute from "./Distribute";
