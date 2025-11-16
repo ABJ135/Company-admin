@@ -10,6 +10,7 @@ import Submissions from "./Pages/Submissions";
 import Reports from "./Pages/Reports";
 import CustomerSupport from "./Pages/ContactSupport";
 import Navbar from "./Components/Navbar";
+import ViewProfile from "./Pages/Profile/ViewProfile";
 
 // ✅ Helper: check if token is expired
 const isTokenExpired = (token) => {
@@ -48,7 +49,6 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 👇 Auto logout if token expired while browsing
   useEffect(() => {
     if (token && isTokenExpired(token)) {
       localStorage.removeItem("token");
@@ -56,17 +56,14 @@ function App() {
     }
   }, [token, location.pathname, navigate]);
 
-  // 👇 Hide navbar on login/signup routes
   const hideNavbar =
     location.pathname === "/" || location.pathname.toLowerCase() === "/signup";
 
   return (
     <div>
-      {/* ✅ Show Navbar only when logged in and not on login/signup */}
       {!hideNavbar && token && !isTokenExpired(token) && <Navbar />}
 
       <Routes>
-        {/* 🔓 Public Routes (login/signup) */}
         <Route
           path="/"
           element={
@@ -84,7 +81,6 @@ function App() {
           }
         />
 
-        {/* 🔒 Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -142,9 +138,15 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route
+          path="/ViewProfile"
+          element={
+            <ProtectedRoute>
+              <ViewProfile />
+            </ProtectedRoute>
+          }
+        />
 
-
-        {/* 🚫 Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

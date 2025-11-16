@@ -59,7 +59,7 @@ export default function MobileDrawer({
           {isProfileMenu && (
             <>
               <Link
-                to="/dashboard"
+                to="/ViewProfile"
                 onClick={() => setIsOpen(false)}
                 className="block py-3 px-2 rounded-md text-base font-medium text-blue-900 hover:bg-blue-50"
               >

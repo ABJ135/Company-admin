@@ -6,7 +6,7 @@ export default function ProfileMenu({ setProfileOpen }) {
     <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border p-2 z-50">
 
       <Link
-        to="/dashboard"
+        to="/ViewProfile"
         onClick={() => setProfileOpen(false)}
         className="block px-4 py-2 text-sm text-blue-900 hover:bg-blue-50 rounded-md"
       >
